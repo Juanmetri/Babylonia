@@ -2,16 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Pun.Demo.PunBasics;
 
 public class PlayerController : MonoBehaviour
 {
     private PhotonView pv;
+    private Camera camera;
+
 
     private void Awake()
     {
         pv = GetComponent<PhotonView>();
+        camera = GetComponentInChildren<Camera>();
     }
-    void Update()
+
+    private void Start()
+    {
+        camera.gameObject.SetActive(pv.IsMine);
+    }
+
+    private void Update()
     {
         if (pv.IsMine)
         {
@@ -31,6 +41,26 @@ public class PlayerController : MonoBehaviour
             {
                 transform.position += Vector3.right * 5 * Time.deltaTime;
             }
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (pv.IsMine && collision.transform.CompareTag("Coin"))
+        {
+            PhotonView photonView = PhotonView.Get(this);
+            photonView.RPC("CollectCoin", RpcTarget.AllBuffered, collision.gameObject.GetComponent<PhotonView>().ViewID);
+        }
+    }
+
+    [PunRPC]
+    void CollectCoin(int coinViewID)
+    {
+        PhotonView coinPhotonView = PhotonView.Find(coinViewID);
+        if (coinPhotonView != null)
+        {
+            PhotonNetwork.Destroy(coinPhotonView.gameObject);
+            GameManager.instance.AddCoinToPool();
         }
     }
 }
