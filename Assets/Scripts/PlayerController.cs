@@ -2,18 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
-using Photon.Pun.Demo.PunBasics;
 
 public class PlayerController : MonoBehaviour
 {
     private PhotonView pv;
     private Camera camera;
+    private Animator animator;
+    private Rigidbody2D rb;
 
+    public GameObject disparoPrefab;
+    public Transform bulletSpawnPoint;
+    public float moveSpeed = 5f;
+    public float jumpForce = 5f;
+    public float bulletSpeed = 10f;
+    private bool isGrounded = true;
+    public int health = 100;
 
     private void Awake()
     {
         pv = GetComponent<PhotonView>();
         camera = GetComponentInChildren<Camera>();
+        animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody2D>();
     }
 
     private void Start()
@@ -25,42 +35,68 @@ public class PlayerController : MonoBehaviour
     {
         if (pv.IsMine)
         {
-            if (Input.GetKey(KeyCode.W))
-            {
-                transform.position += Vector3.up * 5 * Time.deltaTime;
-            }
-            if (Input.GetKey(KeyCode.S))
-            {
-                transform.position += -Vector3.up * 5 * Time.deltaTime;
-            }
-            if (Input.GetKey(KeyCode.A))
-            {
-                transform.position += -Vector3.right * 5 * Time.deltaTime;
-            }
-            if (Input.GetKey(KeyCode.D))
-            {
-                transform.position += Vector3.right * 5 * Time.deltaTime;
-            }
+            HandleInput();
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void HandleInput()
     {
-        if (pv.IsMine && collision.transform.CompareTag("Coin"))
+        // Movimiento horizontal
+        if (Input.GetKey(KeyCode.D))
         {
-            PhotonView photonView = PhotonView.Get(this);
-            photonView.RPC("CollectCoin", RpcTarget.AllBuffered, collision.gameObject.GetComponent<PhotonView>().ViewID);
+            ICommand moveRight = new MoveCmd(transform, Vector3.right, moveSpeed, animator);
+            moveRight.Execute();
+        }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            ICommand moveLeft = new MoveCmd(transform, Vector3.left, moveSpeed, animator);
+            moveLeft.Execute();
+        }
+        else
+        {
+            animator.SetBool("isRunning", false); // Vuelve a Idle si no se mueve
+        }
+
+        // Salto
+        if (Input.GetKeyDown(KeyCode.W) && isGrounded)
+        {
+            ICommand jump = new JumpCmd(rb, jumpForce, animator);
+            jump.Execute();
+            isGrounded = false;
+        }
+
+        // Disparo
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed);
+            shoot.Execute();
         }
     }
 
-    [PunRPC]
-    void CollectCoin(int coinViewID)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        PhotonView coinPhotonView = PhotonView.Find(coinViewID);
-        if (coinPhotonView != null)
+        if (collision.gameObject.CompareTag("Ground"))
         {
-            PhotonNetwork.Destroy(coinPhotonView.gameObject);
-            GameManager.instance.AddCoinToPool();
+            isGrounded = true;
+            animator.SetBool("isJumping", false);
         }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (!pv.IsMine) return;
+
+        health -= damage;
+        pv.RPC("UpdateHealth", RpcTarget.All, health);
+
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        gameObject.SetActive(false);
     }
 }
