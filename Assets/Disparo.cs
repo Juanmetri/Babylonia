@@ -3,30 +3,38 @@ using Photon.Pun;
 
 public class Disparo : MonoBehaviour
 {
-    public int damage = 10; // Daño que causa la bala
-    public float lifetime = 2f; // Tiempo de vida de la bala
+    public int damage = 10;
+    private PhotonView ownerPhotonView;
 
-    private void Start()
+    public void SetOwner(PhotonView owner)
     {
-        // Destruir el disparo después de un tiempo
-        Destroy(gameObject, lifetime);
+        ownerPhotonView = owner;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        // Verificar si choca con un jugador
-        if (collision.CompareTag("Player"))
+        PhotonView pv = collision.gameObject.GetComponent<PhotonView>();
+        // Ignora colisión si es el propietario
+        if (pv != null && pv == ownerPhotonView) return;
+
+        if (pv != null && collision.gameObject.CompareTag("Player"))
         {
-            // Obtener el componente PlayerController del jugador
-            PlayerController player = collision.GetComponent<PlayerController>();
-            if (player != null)
+            if (PhotonView.Get(this).IsMine)
             {
-                // Causar daño al jugador
-                player.TakeDamage(damage);
+                collision.gameObject.GetComponent<PlayerController>().TakeDamage(damage);
             }
-            // Destruir el disparo al chocar
-            Destroy(gameObject);
+
+            if (PhotonView.Get(this).IsMine || PhotonNetwork.IsMasterClient)
+            {
+                PhotonNetwork.Destroy(gameObject);
+            }
+        }
+        else
+        {
+            if (PhotonView.Get(this).IsMine || PhotonNetwork.IsMasterClient)
+            {
+                PhotonNetwork.Destroy(gameObject);
+            }
         }
     }
-
 }
