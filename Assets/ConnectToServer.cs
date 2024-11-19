@@ -11,6 +11,6 @@ public class ConnectToServer : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
-        PhotonNetwork.LoadLevel("MainMenu");
+        PhotonNetwork.LoadLevel("Menu arranque");
     }
 }
