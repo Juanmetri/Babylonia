@@ -43,6 +43,9 @@ MonoBehaviour:
   - ChangeColor
   - CollectCoin
   - UpdateHealth
+  - SyncEndTurn
+  - SyncTurn
+  - SyncMove
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

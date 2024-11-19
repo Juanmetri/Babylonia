@@ -46,42 +46,47 @@ public class PlayerController : MonoBehaviour
     }
 
     private void HandleInput()
-{
-    Vector3 moveDirection = Vector3.zero;
+    {
+        if (!TurnManager.Instance.IsCurrentPlayerTurn(PhotonNetwork.LocalPlayer.ActorNumber - 1))
+        {
+            return; // Do nothing if it's not this player's turn
+        }
 
-    // Movimiento horizontal
-    if (Input.GetKey(KeyCode.D))
-    {
-        moveDirection = pv.IsMine ? Vector3.right : Vector3.left;
-        ICommand moveRight = new MoveCmd(transform, moveDirection, moveSpeed, animator);
-        moveRight.Execute();
-    }
-    else if (Input.GetKey(KeyCode.A))
-    {
-        moveDirection = pv.IsMine ? Vector3.left : Vector3.right;
-        ICommand moveLeft = new MoveCmd(transform, moveDirection, moveSpeed, animator);
-        moveLeft.Execute();
-    }
-    else
-    {
-        animator.SetBool("isRunning", false); // Vuelve a Idle si no se mueve
-    }
+        Vector3 moveDirection = Vector3.zero;
 
-    // Salto
-    if (Input.GetKeyDown(KeyCode.W) && isGrounded)
-    {
-        ICommand jump = new JumpCmd(rb, jumpForce, animator);
-        jump.Execute();
-        isGrounded = false;
-    }
+        // Movement logic
+        if (Input.GetKey(KeyCode.D))
+        {
+            moveDirection = pv.IsMine ? Vector3.right : Vector3.left;
+            ICommand moveRight = new MoveCmd(transform, moveDirection, moveSpeed, animator);
+            moveRight.Execute();
+        }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            moveDirection = pv.IsMine ? Vector3.left : Vector3.right;
+            ICommand moveLeft = new MoveCmd(transform, moveDirection, moveSpeed, animator);
+            moveLeft.Execute();
+        }
+        else
+        {
+            animator.SetBool("isRunning", false); // Vuelve a Idle si no se mueve
+        }
 
-    // Disparo
-    if (Input.GetKeyDown(KeyCode.E))
-    {
-        ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed, pv);
-        shoot.Execute();
+        // Jump logic
+        if (Input.GetKeyDown(KeyCode.W) && isGrounded)
+        {
+            ICommand jump = new JumpCmd(rb, jumpForce, animator);
+            jump.Execute();
+            isGrounded = false;
+        }
+
+        // Shooting logic
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed, pv);
+            shoot.Execute();
+        }
     }
-}
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
