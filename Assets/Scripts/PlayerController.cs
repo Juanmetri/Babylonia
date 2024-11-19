@@ -47,14 +47,9 @@ public class PlayerController : MonoBehaviour
 
     private void HandleInput()
     {
-        if (!TurnManager.Instance.IsCurrentPlayerTurn(PhotonNetwork.LocalPlayer.ActorNumber - 1))
-        {
-            return; // Do nothing if it's not this player's turn
-        }
-
         Vector3 moveDirection = Vector3.zero;
 
-        // Movement logic
+        // Movimiento horizontal
         if (Input.GetKey(KeyCode.D))
         {
             moveDirection = pv.IsMine ? Vector3.right : Vector3.left;
@@ -72,7 +67,7 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isRunning", false); // Vuelve a Idle si no se mueve
         }
 
-        // Jump logic
+        // Salto
         if (Input.GetKeyDown(KeyCode.W) && isGrounded)
         {
             ICommand jump = new JumpCmd(rb, jumpForce, animator);
@@ -80,7 +75,7 @@ public class PlayerController : MonoBehaviour
             isGrounded = false;
         }
 
-        // Shooting logic
+        // Disparo
         if (Input.GetKeyDown(KeyCode.E))
         {
             ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed, pv);
