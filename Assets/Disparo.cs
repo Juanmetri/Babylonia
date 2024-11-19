@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
@@ -11,30 +13,18 @@ public class Disparo : MonoBehaviour
         ownerPhotonView = owner;
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        PhotonView pv = collision.gameObject.GetComponent<PhotonView>();
-        // Ignora colisión si es el propietario
-        if (pv != null && pv == ownerPhotonView) return;
-
-        if (pv != null && collision.gameObject.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
         {
-            if (PhotonView.Get(this).IsMine)
+            PhotonView targetView = collision.GetComponent<PhotonView>();
+            if (targetView != null && !targetView.IsMine) // Solo aplica daño si el jugador no es el dueño del PhotonView.
             {
-                collision.gameObject.GetComponent<PlayerController>().TakeDamage(damage);
+                targetView.RPC("TakeDamage", RpcTarget.Others, damage); // Aplica daño al propietario del jugador impactado.
             }
 
-            if (PhotonView.Get(this).IsMine || PhotonNetwork.IsMasterClient)
-            {
-                PhotonNetwork.Destroy(gameObject);
-            }
-        }
-        else
-        {
-            if (PhotonView.Get(this).IsMine || PhotonNetwork.IsMasterClient)
-            {
-                PhotonNetwork.Destroy(gameObject);
-            }
+            Destroy(gameObject); // Destruye la bala tras la colisión.
         }
     }
+
 }

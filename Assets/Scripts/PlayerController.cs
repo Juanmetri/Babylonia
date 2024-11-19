@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     public float bulletSpeed = 2f;
     private bool isGrounded = true;
     public int health = 100;
+    private int currentHealth;
 
     private void Awake()
     {
@@ -28,7 +29,10 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
+
+        currentHealth = health;
         camera.gameObject.SetActive(pv.IsMine);
+
 
         // Verificar si este es el jugador 2 y ajustar la rotación inicial
         if (!pv.IsMine)
@@ -91,22 +95,22 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isJumping", false);
         }
     }
-
+    [PunRPC]
     public void TakeDamage(int damage)
     {
-        if (!pv.IsMine) return;
+        if (!pv.IsMine) return; // Solo el jugador dueño del objeto puede tomar daño.
 
-        health -= damage;
-        pv.RPC("UpdateHealth", RpcTarget.All, health);
+        currentHealth -= damage;
+        Debug.Log($"{gameObject.name} recibió {damage} de daño. Salud actual: {currentHealth}");
 
-        if (health <= 0)
+        if (currentHealth <= 0)
         {
             Die();
         }
     }
-
     private void Die()
     {
         gameObject.SetActive(false);
+        Debug.Log($"{gameObject.name} ha muerto.");
     }
 }
