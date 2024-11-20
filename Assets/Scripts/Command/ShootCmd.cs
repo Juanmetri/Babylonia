@@ -16,6 +16,7 @@ public class ShootCmd : ICommand
         this.playerPhotonView = playerPhotonView;
     }
 
+    [PunRPC]
     public void Execute()
     {
         GameObject disparo = PhotonNetwork.Instantiate(disparoPrefab.name, bulletSpawnPoint.position, bulletSpawnPoint.rotation);

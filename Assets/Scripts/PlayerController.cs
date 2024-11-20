@@ -50,42 +50,42 @@ public class PlayerController : MonoBehaviour
     }
 
     private void HandleInput()
-{
-    Vector3 moveDirection = Vector3.zero;
+    {
+        Vector3 moveDirection = Vector3.zero;
 
-    // Movimiento horizontal
-    if (Input.GetKey(KeyCode.D))
-    {
-        moveDirection = pv.IsMine ? Vector3.right : Vector3.left;
-        ICommand moveRight = new MoveCmd(transform, moveDirection, moveSpeed, animator);
-        moveRight.Execute();
-    }
-    else if (Input.GetKey(KeyCode.A))
-    {
-        moveDirection = pv.IsMine ? Vector3.left : Vector3.right;
-        ICommand moveLeft = new MoveCmd(transform, moveDirection, moveSpeed, animator);
-        moveLeft.Execute();
-    }
-    else
-    {
-        animator.SetBool("isRunning", false); // Vuelve a Idle si no se mueve
-    }
+        // Movimiento horizontal
+        if (Input.GetKey(KeyCode.D))
+        {
+            moveDirection = transform.right; // Usa la orientación actual del objeto
+            ICommand moveRight = new MoveCmd(transform, moveDirection, moveSpeed, animator, pv);
+            moveRight.Execute();
+        }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            moveDirection = -transform.right; // Inversa de la orientación actual
+            ICommand moveLeft = new MoveCmd(transform, moveDirection, moveSpeed, animator, pv);
+            moveLeft.Execute();
+        }
+        else
+        {
+            pv.RPC("SetAnimatorBool", RpcTarget.All, "isRunning", false);
+        }
 
-    // Salto
-    if (Input.GetKeyDown(KeyCode.W) && isGrounded)
-    {
-        ICommand jump = new JumpCmd(rb, jumpForce, animator);
-        jump.Execute();
-        isGrounded = false;
-    }
+        // Salto
+        if (Input.GetKeyDown(KeyCode.W) && isGrounded)
+        {
+            ICommand jump = new JumpCmd(rb, jumpForce, animator, pv);
+            jump.Execute();
+            isGrounded = false;
+        }
 
-    // Disparo
-    if (Input.GetKeyDown(KeyCode.E))
-    {
-        ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed, pv);
-        shoot.Execute();
+        // Disparo
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed, pv);
+            shoot.Execute();
+        }
     }
-}
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -95,6 +95,13 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isJumping", false);
         }
     }
+
+    [PunRPC]
+    public void SetAnimatorBool(string paramName, bool value)
+    {
+        animator.SetBool(paramName, value);
+    }
+
     [PunRPC]
     public void TakeDamage(int damage)
     {

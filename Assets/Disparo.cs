@@ -12,7 +12,7 @@ public class Disparo : MonoBehaviour
     {
         ownerPhotonView = owner;
     }
-
+    [PunRPC]
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
@@ -20,11 +20,10 @@ public class Disparo : MonoBehaviour
             PhotonView targetView = collision.GetComponent<PhotonView>();
             if (targetView != null && !targetView.IsMine) // Solo aplica daño si el jugador no es el dueño del PhotonView.
             {
-                targetView.RPC("TakeDamage", RpcTarget.Others, damage); // Aplica daño al propietario del jugador impactado.
+                targetView.RPC("TakeDamage", RpcTarget.All, damage); // Aplica daño a todos los jugadores
             }
 
             Destroy(gameObject); // Destruye la bala tras la colisión.
         }
     }
-
 }

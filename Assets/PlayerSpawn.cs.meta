@@ -5,6 +5,8 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - playerPrefab: {fileID: 4754487313713023686, guid: aec472aba89098f4aace9b2f9a520477, type: 3}
+  - spritePlayer1: {fileID: 21300000, guid: 8260fa3e4fbaa204d8ba008dd62c4b27, type: 3}
+  - spritePlayer2: {fileID: 21300000, guid: 0bf50b8898209df41a66bc763b3309f4, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
