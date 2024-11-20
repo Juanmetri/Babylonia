@@ -6,6 +6,7 @@ using Photon.Pun;
 public class Disparo : MonoBehaviour
 {
     public int damage = 10;
+    public float pushForce = 5f; // Fuerza de empuje
     private PhotonView ownerPhotonView;
 
     public void SetOwner(PhotonView owner)
@@ -18,12 +19,17 @@ public class Disparo : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             PhotonView targetView = collision.GetComponent<PhotonView>();
-            if (targetView != null && !targetView.IsMine) // Solo aplica daño si el jugador no es el dueño del PhotonView.
+            if (targetView != null && !targetView.IsMine) // Solo afecta a otros jugadores
             {
-                targetView.RPC("TakeDamage", RpcTarget.All, damage); // Aplica daño a todos los jugadores
+                // Aplicar daño
+                targetView.RPC("TakeDamage", targetView.Owner, damage);
+
+                // Empujar al jugador
+                Vector2 pushDirection = (collision.transform.position - transform.position).normalized; // Dirección del empuje
+                targetView.RPC("ApplyPush", targetView.Owner, pushDirection, pushForce);
             }
 
-            Destroy(gameObject); // Destruye la bala tras la colisión.
+            Destroy(gameObject); // Destruir la bala tras la colisión
         }
     }
 }

@@ -47,6 +47,7 @@ MonoBehaviour:
   - Execute
   - SetAnimatorBool
   - OnTriggerEnter2D
+  - ApplyPush
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

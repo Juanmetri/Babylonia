@@ -105,7 +105,7 @@ public class PlayerController : MonoBehaviour
     [PunRPC]
     public void TakeDamage(int damage)
     {
-        if (!pv.IsMine) return; // Solo el jugador dueño del objeto puede tomar daño.
+        if (!pv.IsMine) return; // Solo aplicar daño en el cliente propietario
 
         currentHealth -= damage;
         Debug.Log($"{gameObject.name} recibió {damage} de daño. Salud actual: {currentHealth}");
@@ -115,9 +115,17 @@ public class PlayerController : MonoBehaviour
             Die();
         }
     }
+
+    [PunRPC]
+    public void ApplyPush(Vector2 direction, float force)
+    {
+        if (!pv.IsMine) return; // Solo aplicar el empuje en el cliente propietario
+
+        rb.AddForce(direction * force, ForceMode2D.Impulse); // Aplicar fuerza al Rigidbody2D
+    }
+
     private void Die()
     {
-        gameObject.SetActive(false);
         Debug.Log($"{gameObject.name} ha muerto.");
     }
 }
