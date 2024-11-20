@@ -48,6 +48,8 @@ MonoBehaviour:
   - SetAnimatorBool
   - OnTriggerEnter2D
   - ApplyPush
+  - StartGame
+  - StartGameplay
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
