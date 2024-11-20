@@ -11,13 +11,19 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
 
     public GameObject disparoPrefab;
+    public GameObject chargedDisparoPrefab; // Prefab for the charged shot
     public Transform bulletSpawnPoint;
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
     public float bulletSpeed = 10f;
+    public float chargedBulletSpeed = 20f; // Speed for the charged shot
     private bool isGrounded = true;
     public int health = 100;
     private int currentHealth;
+
+    private bool isCharging = false; // Charging state
+    private float chargeTime = 0f; // Charge duration
+    public float maxChargeTime = 1f; // Max charge time for charged shot
 
     private void Awake()
     {
@@ -27,6 +33,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
+
     private void Start()
     {
         currentHealth = health;
@@ -72,10 +79,30 @@ public class PlayerController : MonoBehaviour
             isGrounded = false;
         }
 
-        // Disparo
+        // Charged shot
         if (Input.GetKeyDown(KeyCode.E))
         {
-            Shoot();
+            isCharging = true;
+            chargeTime = 0f;
+        }
+
+        if (Input.GetKey(KeyCode.E) && isCharging)
+        {
+            chargeTime += Time.deltaTime;
+            
+        }
+
+        if (Input.GetKeyUp(KeyCode.E) && isCharging)
+        {
+            isCharging = false;
+            if (chargeTime >= maxChargeTime)
+            {
+                ShootCharged();
+            }
+            else
+            {
+                Shoot();
+            }
         }
     }
 
@@ -83,10 +110,8 @@ public class PlayerController : MonoBehaviour
     {
         if (disparoPrefab == null || bulletSpawnPoint == null) return;
 
-        // Determinar la dirección del disparo basado en flipX
         Vector2 shootDirection = spriteRenderer.flipX ? Vector2.left : Vector2.right;
 
-        // Instanciar el disparo utilizando el comando ShootCmd
         ICommand shoot = new ShootCmd(
             disparoPrefab.name,
             bulletSpawnPoint.position,
@@ -96,6 +121,23 @@ public class PlayerController : MonoBehaviour
         );
 
         shoot.Execute();
+    }
+
+    private void ShootCharged()
+    {
+        if (chargedDisparoPrefab == null || bulletSpawnPoint == null) return;
+
+        Vector2 shootDirection = spriteRenderer.flipX ? Vector2.left : Vector2.right;
+
+        ICommand shootCharged = new ShootCmd(
+            chargedDisparoPrefab.name,
+            bulletSpawnPoint.position,
+            shootDirection,
+            chargedBulletSpeed,
+            pv
+        );
+
+        shootCharged.Execute();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -116,24 +158,21 @@ public class PlayerController : MonoBehaviour
     [PunRPC]
     public void ExecuteShoot(string disparoPrefabName, Vector3 spawnPosition, Vector2 shootDirection, float bulletSpeed)
     {
-        // Instanciar el disparo
         GameObject disparo = PhotonNetwork.Instantiate(disparoPrefabName, spawnPosition, Quaternion.identity);
 
-        // Girar el sprite de la bala si dispara hacia la izquierda
         if (shootDirection.x < 0)
         {
             Vector3 newScale = disparo.transform.localScale;
-            newScale.x = -Mathf.Abs(newScale.x); // Invertir en el eje X
+            newScale.x = -Mathf.Abs(newScale.x);
             disparo.transform.localScale = newScale;
         }
         else
         {
             Vector3 newScale = disparo.transform.localScale;
-            newScale.x = Mathf.Abs(newScale.x); // Asegurar que esté normal hacia la derecha
+            newScale.x = Mathf.Abs(newScale.x);
             disparo.transform.localScale = newScale;
         }
 
-        // Configurar la dirección y velocidad del disparo
         Rigidbody2D rb = disparo.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
@@ -175,7 +214,6 @@ public class PlayerController : MonoBehaviour
     {
         spriteRenderer.flipX = flipX;
 
-        // Cambiar la posición del bulletSpawnPoint en el eje X
         if (bulletSpawnPoint != null)
         {
             Vector3 newPosition = bulletSpawnPoint.localPosition;

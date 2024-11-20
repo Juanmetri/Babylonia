@@ -254,11 +254,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   disparoPrefab: {fileID: 5983309580747162610, guid: ab5e255b44aa96b4eace1edb254b075d, type: 3}
+  chargedDisparoPrefab: {fileID: 5983309580747162610, guid: 5c3047a8093c77b43935ba6717185718, type: 3}
   bulletSpawnPoint: {fileID: 5292338067908648919}
   moveSpeed: 5
   jumpForce: 5
   bulletSpeed: 10
+  chargedBulletSpeed: 50
   health: 100
+  maxChargeTime: 1
 --- !u!61 &2063150532447854333
 BoxCollider2D:
   m_ObjectHideFlags: 0

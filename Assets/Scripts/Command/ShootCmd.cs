@@ -21,7 +21,6 @@ public class ShootCmd : ICommand
     [PunRPC]
     public void Execute()
     {
-        // RPC para sincronizar el disparo en todos los clientes
         playerPhotonView.RPC("ExecuteShoot", RpcTarget.All, disparoPrefabName, spawnPosition, shootDirection, bulletSpeed);
     }
 }
