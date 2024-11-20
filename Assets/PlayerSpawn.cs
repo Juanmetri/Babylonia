@@ -1,27 +1,25 @@
 using Photon.Pun;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerSpawn : MonoBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
 
-    private GameObject player;
-    private PhotonView pv;
-
-    private void Awake()
-    {
-        pv = GetComponent<PhotonView>();
-    }
-
     private void Start()
     {
-        // Determina la posición y rotación en función del número de jugadores
+        if (!PhotonNetwork.IsConnected || playerPrefab == null)
+        {
+            Debug.LogError("Photon no está conectado o no se asignó el prefab del jugador.");
+            return;
+        }
+
+        // Determinar posición y rotación basándose en el actor número
+        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
         Vector2 spawnPosition;
         Quaternion spawnRotation;
 
-        // Verifica si hay un jugador en la sala
-        if (PhotonNetwork.PlayerList.Length % 2 == 0)
+        // Asignar posiciones específicas según el número de jugador
+        if (actorNumber % 2 == 0)
         {
             // Jugador B (derecha)
             spawnPosition = new Vector2(4, 0); // Ajusta según tu escena
@@ -34,21 +32,27 @@ public class PlayerSpawn : MonoBehaviour
             spawnRotation = Quaternion.identity; // Mirando hacia la derecha
         }
 
-        player = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
+        // Instanciar al jugador en red
+        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation);
 
-        // Lógica de cambio de color
-        int playerIndex = PhotonNetwork.PlayerList.Length;
-        pv.RPC("ChangeColor", RpcTarget.AllBuffered, player.GetComponent<PhotonView>().ViewID, playerIndex);
+        // Establecer color según el actor número
+        int colorIndex = actorNumber % 2; // Alternar entre colores
+        Color playerColor = (colorIndex == 0) ? Color.red : Color.yellow;
+
+        PhotonView pv = player.GetComponent<PhotonView>();
+        if (pv != null)
+        {
+            pv.RPC("SetPlayerColor", RpcTarget.AllBuffered, pv.ViewID, playerColor);
+        }
     }
 
     [PunRPC]
-    private void ChangeColor(int playerViewID, int playerIndex)
+    private void SetPlayerColor(int playerViewID, Color color)
     {
         PhotonView targetPhotonView = PhotonView.Find(playerViewID);
-
         if (targetPhotonView != null)
         {
-            targetPhotonView.gameObject.GetComponent<SpriteRenderer>().color = (playerIndex == 1) ? Color.red : Color.yellow;
+            targetPhotonView.gameObject.GetComponent<SpriteRenderer>().color = color;
         }
     }
 }

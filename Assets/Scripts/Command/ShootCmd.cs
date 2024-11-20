@@ -3,15 +3,17 @@ using Photon.Pun;
 
 public class ShootCmd : ICommand
 {
-    private GameObject disparoPrefab;
-    private Transform bulletSpawnPoint;
+    private string disparoPrefabName;
+    private Vector3 spawnPosition;
+    private Vector2 shootDirection;
     private float bulletSpeed;
     private PhotonView playerPhotonView;
 
-    public ShootCmd(GameObject disparoPrefab, Transform bulletSpawnPoint, float bulletSpeed, PhotonView playerPhotonView)
+    public ShootCmd(string disparoPrefabName, Vector3 spawnPosition, Vector2 shootDirection, float bulletSpeed, PhotonView playerPhotonView)
     {
-        this.disparoPrefab = disparoPrefab;
-        this.bulletSpawnPoint = bulletSpawnPoint;
+        this.disparoPrefabName = disparoPrefabName;
+        this.spawnPosition = spawnPosition;
+        this.shootDirection = shootDirection;
         this.bulletSpeed = bulletSpeed;
         this.playerPhotonView = playerPhotonView;
     }
@@ -19,13 +21,7 @@ public class ShootCmd : ICommand
     [PunRPC]
     public void Execute()
     {
-        GameObject disparo = PhotonNetwork.Instantiate(disparoPrefab.name, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
-        disparo.GetComponent<Disparo>().SetOwner(playerPhotonView); // Set the owner
-
-        Rigidbody2D rb = disparo.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.velocity = bulletSpawnPoint.right * bulletSpeed;
-        }
+        // RPC para sincronizar el disparo en todos los clientes
+        playerPhotonView.RPC("ExecuteShoot", RpcTarget.All, disparoPrefabName, spawnPosition, shootDirection, bulletSpeed);
     }
 }

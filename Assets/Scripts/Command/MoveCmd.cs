@@ -26,12 +26,18 @@ public class MoveCmd : ICommand
     public void Execute()
     {
         playerTransform.position += direction * speed * Time.deltaTime;
+
+        // Activar animación de correr
         pv.RPC("SetAnimatorBool", RpcTarget.All, "isRunning", true);
 
-        // Flip del sprite dependiendo de la dirección de movimiento
-        if (direction.x < 0)
-            spriteRenderer.flipX = true;  // Mirar a la izquierda
-        else if (direction.x > 0)
-            spriteRenderer.flipX = false; // Mirar a la derecha
+        // Cambiar dirección del sprite y ajustar el bulletSpawnPoint
+        if (direction.x < 0 && !spriteRenderer.flipX)
+        {
+            pv.RPC("SetFlipX", RpcTarget.AllBuffered, true); // Girar hacia la izquierda
+        }
+        else if (direction.x > 0 && spriteRenderer.flipX)
+        {
+            pv.RPC("SetFlipX", RpcTarget.AllBuffered, false); // Girar hacia la derecha
+        }
     }
 }

@@ -50,6 +50,10 @@ MonoBehaviour:
   - ApplyPush
   - StartGame
   - StartGameplay
+  - SetFlipX
+  - ExecuteShoot
+  - SetPlayerColor
+  - OnStartGameButtonClicked
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

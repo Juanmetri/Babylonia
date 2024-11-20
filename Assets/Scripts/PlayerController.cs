@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
@@ -9,12 +8,13 @@ public class PlayerController : MonoBehaviour
     private Camera camera;
     private Animator animator;
     private Rigidbody2D rb;
+    private SpriteRenderer spriteRenderer;
 
     public GameObject disparoPrefab;
     public Transform bulletSpawnPoint;
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
-    public float bulletSpeed = 2f;
+    public float bulletSpeed = 10f;
     private bool isGrounded = true;
     public int health = 100;
     private int currentHealth;
@@ -25,20 +25,12 @@ public class PlayerController : MonoBehaviour
         camera = GetComponentInChildren<Camera>();
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
-
     private void Start()
     {
-
         currentHealth = health;
         camera.gameObject.SetActive(pv.IsMine);
-
-
-        // Verificar si este es el jugador 2 y ajustar la rotación inicial
-        if (!pv.IsMine)
-        {
-            transform.eulerAngles = new Vector3(0, 180, 0); // Orienta al jugador 2 en dirección opuesta
-        }
     }
 
     private void Update()
@@ -53,16 +45,17 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 moveDirection = Vector3.zero;
 
-        // Movimiento horizontal
+        // Movimiento a la derecha
         if (Input.GetKey(KeyCode.D))
         {
-            moveDirection = transform.right; // Usa la orientación actual del objeto
+            moveDirection = Vector3.right;
             ICommand moveRight = new MoveCmd(transform, moveDirection, moveSpeed, animator, pv);
             moveRight.Execute();
         }
+        // Movimiento a la izquierda
         else if (Input.GetKey(KeyCode.A))
         {
-            moveDirection = -transform.right; // Inversa de la orientación actual
+            moveDirection = Vector3.left;
             ICommand moveLeft = new MoveCmd(transform, moveDirection, moveSpeed, animator, pv);
             moveLeft.Execute();
         }
@@ -82,9 +75,27 @@ public class PlayerController : MonoBehaviour
         // Disparo
         if (Input.GetKeyDown(KeyCode.E))
         {
-            ICommand shoot = new ShootCmd(disparoPrefab, bulletSpawnPoint, bulletSpeed, pv);
-            shoot.Execute();
+            Shoot();
         }
+    }
+
+    private void Shoot()
+    {
+        if (disparoPrefab == null || bulletSpawnPoint == null) return;
+
+        // Determinar la dirección del disparo basado en flipX
+        Vector2 shootDirection = spriteRenderer.flipX ? Vector2.left : Vector2.right;
+
+        // Instanciar el disparo utilizando el comando ShootCmd
+        ICommand shoot = new ShootCmd(
+            disparoPrefab.name,
+            bulletSpawnPoint.position,
+            shootDirection,
+            bulletSpeed,
+            pv
+        );
+
+        shoot.Execute();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -103,9 +114,39 @@ public class PlayerController : MonoBehaviour
     }
 
     [PunRPC]
+    public void ExecuteShoot(string disparoPrefabName, Vector3 spawnPosition, Vector2 shootDirection, float bulletSpeed)
+    {
+        // Instanciar el disparo
+        GameObject disparo = PhotonNetwork.Instantiate(disparoPrefabName, spawnPosition, Quaternion.identity);
+
+        // Girar el sprite de la bala si dispara hacia la izquierda
+        if (shootDirection.x < 0)
+        {
+            Vector3 newScale = disparo.transform.localScale;
+            newScale.x = -Mathf.Abs(newScale.x); // Invertir en el eje X
+            disparo.transform.localScale = newScale;
+        }
+        else
+        {
+            Vector3 newScale = disparo.transform.localScale;
+            newScale.x = Mathf.Abs(newScale.x); // Asegurar que esté normal hacia la derecha
+            disparo.transform.localScale = newScale;
+        }
+
+        // Configurar la dirección y velocidad del disparo
+        Rigidbody2D rb = disparo.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.velocity = shootDirection * bulletSpeed;
+        }
+
+        Debug.Log($"Disparo creado en {spawnPosition} con dirección {shootDirection}, velocidad {bulletSpeed}");
+    }
+
+    [PunRPC]
     public void TakeDamage(int damage)
     {
-        if (!pv.IsMine) return; // Solo aplicar daño en el cliente propietario
+        if (!pv.IsMine) return;
 
         currentHealth -= damage;
         Debug.Log($"{gameObject.name} recibió {damage} de daño. Salud actual: {currentHealth}");
@@ -119,13 +160,27 @@ public class PlayerController : MonoBehaviour
     [PunRPC]
     public void ApplyPush(Vector2 direction, float force)
     {
-        if (!pv.IsMine) return; // Solo aplicar el empuje en el cliente propietario
+        if (!pv.IsMine) return;
 
-        rb.AddForce(direction * force, ForceMode2D.Impulse); // Aplicar fuerza al Rigidbody2D
+        rb.AddForce(direction * force, ForceMode2D.Impulse);
     }
 
     private void Die()
     {
         Debug.Log($"{gameObject.name} ha muerto.");
+    }
+
+    [PunRPC]
+    public void SetFlipX(bool flipX)
+    {
+        spriteRenderer.flipX = flipX;
+
+        // Cambiar la posición del bulletSpawnPoint en el eje X
+        if (bulletSpawnPoint != null)
+        {
+            Vector3 newPosition = bulletSpawnPoint.localPosition;
+            newPosition.x = flipX ? -Mathf.Abs(newPosition.x) : Mathf.Abs(newPosition.x);
+            bulletSpawnPoint.localPosition = newPosition;
+        }
     }
 }
