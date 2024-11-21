@@ -55,14 +55,14 @@ public class PlayerController : MonoBehaviour
         // Movimiento a la derecha
         if (Input.GetKey(KeyCode.D))
         {
-            moveDirection = Vector3.right;
+            moveDirection = transform.right; // Mover basado en la rotación
             ICommand moveRight = new MoveCmd(transform, moveDirection, moveSpeed, animator, pv);
             moveRight.Execute();
         }
         // Movimiento a la izquierda
         else if (Input.GetKey(KeyCode.A))
         {
-            moveDirection = Vector3.left;
+            moveDirection = -transform.right; // Invertir dirección
             ICommand moveLeft = new MoveCmd(transform, moveDirection, moveSpeed, animator, pv);
             moveLeft.Execute();
         }
@@ -79,7 +79,6 @@ public class PlayerController : MonoBehaviour
             isGrounded = false;
         }
 
-        // Charged shot
         if (Input.GetKeyDown(KeyCode.E))
         {
             isCharging = true;
@@ -89,7 +88,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.E) && isCharging)
         {
             chargeTime += Time.deltaTime;
-            
+
         }
 
         if (Input.GetKeyUp(KeyCode.E) && isCharging)
