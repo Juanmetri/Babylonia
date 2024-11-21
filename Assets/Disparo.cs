@@ -13,23 +13,33 @@ public class Disparo : MonoBehaviour
         ownerPhotonView = owner;
     }
 
-    [PunRPC]
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
         {
             PhotonView targetView = collision.GetComponent<PhotonView>();
-            if (targetView != null && !targetView.IsMine)
+            if (targetView != null && targetView.IsMine)
             {
+                // Determinar el daño según el tipo de disparo
                 int finalDamage = gameObject.name.Contains("Charged") ? chargedDamage : damage;
 
-                targetView.RPC("TakeDamage", targetView.Owner, finalDamage);
+                // Aplicar daño al jugador
+                targetView.RPC("TakeDamage", RpcTarget.All, finalDamage);
 
+                // Empujar al jugador
                 Vector2 pushDirection = (collision.transform.position - transform.position).normalized;
-                targetView.RPC("ApplyPush", targetView.Owner, pushDirection, pushForce);
+                targetView.RPC("ApplyPush", RpcTarget.All, pushDirection, pushForce);
             }
+        }
 
-            Destroy(gameObject);
+        // Destruir el disparo si el cliente tiene permiso
+        if (PhotonNetwork.IsMasterClient || ownerPhotonView.IsMine)
+        {
+            PhotonNetwork.Destroy(gameObject);
+        }
+        else
+        {
+            Debug.LogWarning("El cliente no tiene permiso para destruir este objeto.");
         }
     }
 }

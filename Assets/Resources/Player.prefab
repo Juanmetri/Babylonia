@@ -261,6 +261,7 @@ MonoBehaviour:
   bulletSpeed: 10
   chargedBulletSpeed: 50
   health: 100
+  fireCooldown: 0.5
   maxChargeTime: 1
 --- !u!61 &2063150532447854333
 BoxCollider2D:

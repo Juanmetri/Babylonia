@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damage: 10
-  chargedDamage: 30
+  chargedDamage: 0
   pushForce: 5
 --- !u!50 &3794172827891367786
 Rigidbody2D:

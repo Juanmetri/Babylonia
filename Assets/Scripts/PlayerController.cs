@@ -14,16 +14,19 @@ public class PlayerController : MonoBehaviour
     public GameObject chargedDisparoPrefab; // Prefab for the charged shot
     public Transform bulletSpawnPoint;
     public float moveSpeed = 5f;
-    public float jumpForce = 5f;
+    public float jumpForce = 10f;
     public float bulletSpeed = 10f;
     public float chargedBulletSpeed = 20f; // Speed for the charged shot
     private bool isGrounded = true;
     public int health = 100;
     private int currentHealth;
+    private float lastFireTime = 0f; // Momento del último disparo
+    public float fireCooldown = 0.5f; // Intervalo mínimo entre disparos
 
     private bool isCharging = false; // Charging state
     private float chargeTime = 0f; // Charge duration
     public float maxChargeTime = 1f; // Max charge time for charged shot
+    private bool canShoot = true;
 
     private void Awake()
     {
@@ -47,7 +50,7 @@ public class PlayerController : MonoBehaviour
             HandleInput();
         }
     }
-
+    [PunRPC]
     private void HandleInput()
     {
         Vector3 moveDirection = Vector3.zero;
@@ -79,35 +82,66 @@ public class PlayerController : MonoBehaviour
             isGrounded = false;
         }
 
+        // Disparo común con la tecla E
         if (Input.GetKeyDown(KeyCode.E))
+        {
+            canShoot = false;
+            Shoot();
+            StartCoroutine(ResetShoot());
+        }
+
+        // Carga del disparo cargado con la tecla Q
+        if (Input.GetKeyDown(KeyCode.Q))
         {
             isCharging = true;
             chargeTime = 0f;
+            Debug.Log("Carga iniciada");
         }
 
-        if (Input.GetKey(KeyCode.E) && isCharging)
+        // Incrementar la carga mientras se mantiene presionado Q
+        if (Input.GetKey(KeyCode.Q) && isCharging)
         {
             chargeTime += Time.deltaTime;
 
+            if (chargeTime >= maxChargeTime)
+            {
+                Debug.Log("Carga completa");
+            }
         }
 
-        if (Input.GetKeyUp(KeyCode.E) && isCharging)
+        // Ejecutar disparo cargado al soltar Q
+        if (Input.GetKeyUp(KeyCode.Q) && isCharging)
         {
             isCharging = false;
+
             if (chargeTime >= maxChargeTime)
             {
                 ShootCharged();
+                Debug.Log("Ejecutando disparo cargado");
             }
             else
             {
-                Shoot();
+                Debug.Log("No se alcanzó el tiempo para disparo cargado.");
             }
+
+            chargeTime = 0f; // Reiniciar el tiempo de carga
         }
     }
-
+    private IEnumerator ResetShoot()
+    {
+        yield return new WaitForSeconds(0.1f); // Delay mínimo entre disparos
+        canShoot = true;
+    }
+    [PunRPC]
     private void Shoot()
     {
-        if (disparoPrefab == null || bulletSpawnPoint == null) return;
+        Debug.Log($"Disparo ejecutado por {PhotonNetwork.NickName} en {Time.time}");
+
+        if (disparoPrefab == null || bulletSpawnPoint == null)
+        {
+            Debug.LogError("DisparoPrefab o BulletSpawnPoint no están configurados.");
+            return;
+        }
 
         Vector2 shootDirection = spriteRenderer.flipX ? Vector2.left : Vector2.right;
 
@@ -121,7 +155,7 @@ public class PlayerController : MonoBehaviour
 
         shoot.Execute();
     }
-
+    [PunRPC]
     private void ShootCharged()
     {
         if (chargedDisparoPrefab == null || bulletSpawnPoint == null) return;
@@ -157,52 +191,41 @@ public class PlayerController : MonoBehaviour
     [PunRPC]
     public void ExecuteShoot(string disparoPrefabName, Vector3 spawnPosition, Vector2 shootDirection, float bulletSpeed)
     {
-        GameObject disparo = PhotonNetwork.Instantiate(disparoPrefabName, spawnPosition, Quaternion.identity);
+        if (!PhotonNetwork.IsMasterClient && !pv.IsMine) return; // Solo permitir al MasterClient o al Owner ejecutar esto
 
-        if (shootDirection.x < 0)
-        {
-            Vector3 newScale = disparo.transform.localScale;
-            newScale.x = -Mathf.Abs(newScale.x);
-            disparo.transform.localScale = newScale;
-        }
-        else
-        {
-            Vector3 newScale = disparo.transform.localScale;
-            newScale.x = Mathf.Abs(newScale.x);
-            disparo.transform.localScale = newScale;
-        }
+        Debug.Log($"RPC ExecuteShoot llamado por {PhotonNetwork.NickName} en {Time.time}");
+
+        GameObject disparo = PhotonNetwork.Instantiate(disparoPrefabName, spawnPosition, Quaternion.identity);
 
         Rigidbody2D rb = disparo.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             rb.velocity = shootDirection * bulletSpeed;
         }
-
-        Debug.Log($"Disparo creado en {spawnPosition} con dirección {shootDirection}, velocidad {bulletSpeed}");
     }
 
     [PunRPC]
     public void TakeDamage(int damage)
     {
-        if (!pv.IsMine) return;
+        if (!pv.IsMine) return; // Solo el cliente propietario aplica el daño
 
         currentHealth -= damage;
         Debug.Log($"{gameObject.name} recibió {damage} de daño. Salud actual: {currentHealth}");
 
         if (currentHealth <= 0)
         {
-            Die();
+            Die(); // Llamar al método Die cuando la salud llega a 0
         }
     }
 
     [PunRPC]
     public void ApplyPush(Vector2 direction, float force)
     {
-        if (!pv.IsMine) return;
+        if (!pv.IsMine) return; // Solo el cliente propietario aplica el empuje
 
-        rb.AddForce(direction * force, ForceMode2D.Impulse);
+        rb.AddForce(direction * force, ForceMode2D.Impulse); // Aplica la fuerza al Rigidbody2D
     }
-    
+
     [PunRPC]
     public void Die()
     {

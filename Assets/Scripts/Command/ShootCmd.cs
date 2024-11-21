@@ -21,6 +21,10 @@ public class ShootCmd : ICommand
     [PunRPC]
     public void Execute()
     {
-        playerPhotonView.RPC("ExecuteShoot", RpcTarget.All, disparoPrefabName, spawnPosition, shootDirection, bulletSpeed);
+            if (!playerPhotonView.IsMine) return; // Solo el propietario ejecuta este comando
+
+            Debug.Log($"ShootCmd ejecutado por {PhotonNetwork.NickName} en {Time.time}");
+            playerPhotonView.RPC("ExecuteShoot", RpcTarget.All, disparoPrefabName, spawnPosition, shootDirection, bulletSpeed);
+
     }
 }
