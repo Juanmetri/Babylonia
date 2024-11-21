@@ -1073,9 +1073,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64ba8a5ce5752a5488c07f83a131cab7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startButton: {fileID: 945452528}
-  statusText: {fileID: 423763294}
   playerStatusText: {fileID: 354047012}
+  roomStatusText: {fileID: 423763294}
+  readyButton: {fileID: 1483408183}
+  startButton: {fileID: 945452528}
 --- !u!4 &1009609215
 Transform:
   m_ObjectHideFlags: 0

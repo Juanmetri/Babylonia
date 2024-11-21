@@ -30,7 +30,7 @@ MonoBehaviour:
     NetworkLogging: 1
   DevRegion: 
   PunLogging: 0
-  EnableSupportLogger: 0
+  EnableSupportLogger: 1
   RunInBackground: 1
   StartInOfflineMode: 0
   RpcList:
@@ -54,6 +54,10 @@ MonoBehaviour:
   - ExecuteShoot
   - SetPlayerColor
   - OnStartGameButtonClicked
+  - AllPlayersReady
+  - OnPlayerPropertiesUpdate
+  - OnReadyButtonClicked
+  - UpdatePlayerStatusText
   DisableAutoOpenWizard: 1
-  ShowSettings: 1
+  ShowSettings: 0
   DevRegionSetOnce: 1
