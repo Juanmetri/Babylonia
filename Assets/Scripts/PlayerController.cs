@@ -202,10 +202,27 @@ public class PlayerController : MonoBehaviour
 
         rb.AddForce(direction * force, ForceMode2D.Impulse);
     }
-
-    private void Die()
+    
+    [PunRPC]
+    public void Die()
     {
+        if (!pv.IsMine) return;
+
         Debug.Log($"{gameObject.name} ha muerto.");
+
+        // Determinar al ganador
+        string winnerName = "";
+        foreach (var player in PhotonNetwork.PlayerList)
+        {
+            if (player.NickName != PhotonNetwork.NickName)
+            {
+                winnerName = player.NickName; // Encuentra el nombre del otro jugador
+            }
+        }
+
+        // Llamar al RPC para mostrar la pantalla del ganador a todos
+        PhotonView.FindObjectsOfType<GameOverManager>()[0].photonView.RPC("ShowWinnerScreen", RpcTarget.All, winnerName);
+
     }
 
     [PunRPC]
