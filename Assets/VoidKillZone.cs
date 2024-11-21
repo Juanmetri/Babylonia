@@ -1,11 +1,11 @@
 using UnityEngine;
 using Photon.Pun;
 
-public class LavaDamage : MonoBehaviour
+public class VoidKillZone : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Verificar si el objeto que toca la lava es el jugador
+        // Verificar si el objeto que entra en el trigger es un jugador
         if (other.CompareTag("Player"))
         {
             PhotonView pv = other.GetComponent<PhotonView>();
@@ -13,12 +13,12 @@ public class LavaDamage : MonoBehaviour
             {
                 // Destruir el jugador sincronizadamente
                 PhotonNetwork.Destroy(other.gameObject);
-                Debug.Log("¡Jugador tocó la lava y fue destruido!");
+                Debug.Log("Jugador cayó al vacío y fue destruido.");
             }
         }
         else
         {
-            Debug.Log($"Objeto que tocó la lava: {other.name} (No es un jugador)");
+            Debug.Log($"Objeto que cayó al vacío: {other.name} (No es un jugador)");
         }
     }
 }
