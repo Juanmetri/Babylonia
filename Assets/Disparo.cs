@@ -8,9 +8,14 @@ public class Disparo : MonoBehaviour
     public float pushForce = 5f;
     private PhotonView ownerPhotonView;
 
-    public void SetOwner(PhotonView owner)
+    [PunRPC]
+    public void SetOwner(int viewID)
     {
-        ownerPhotonView = owner;
+        PhotonView ownerView = PhotonView.Find(viewID);
+        if (ownerView != null)
+        {
+            ownerPhotonView = ownerView;
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -18,22 +23,22 @@ public class Disparo : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             PhotonView targetView = collision.GetComponent<PhotonView>();
-            if (targetView != null && targetView.IsMine)
+            if (targetView != null)
             {
                 // Determinar el daño según el tipo de disparo
                 int finalDamage = gameObject.name.Contains("Charged") ? chargedDamage : damage;
 
-                // Aplicar daño al jugador
-                targetView.RPC("TakeDamage", RpcTarget.All, finalDamage);
+                // Aplicar daño al jugador usando RPC
+                targetView.RPC("TakeDamage", RpcTarget.AllBuffered, finalDamage);
 
-                // Empujar al jugador
+                // Calcular la dirección del empuje
                 Vector2 pushDirection = (collision.transform.position - transform.position).normalized;
-                targetView.RPC("ApplyPush", RpcTarget.All, pushDirection, pushForce);
+                targetView.RPC("ApplyPush", RpcTarget.AllBuffered, pushDirection, pushForce);
             }
         }
 
-        // Destruir el disparo si el cliente tiene permiso
-        if (PhotonNetwork.IsMasterClient || ownerPhotonView.IsMine)
+        // Destruir el disparo desde el cliente que lo creó
+        if (PhotonNetwork.IsMasterClient || (ownerPhotonView != null && ownerPhotonView.IsMine))
         {
             PhotonNetwork.Destroy(gameObject);
         }
@@ -41,5 +46,7 @@ public class Disparo : MonoBehaviour
         {
             Debug.LogWarning("El cliente no tiene permiso para destruir este objeto.");
         }
+
+
     }
 }

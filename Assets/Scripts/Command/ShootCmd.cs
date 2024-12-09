@@ -21,10 +21,22 @@ public class ShootCmd : ICommand
     [PunRPC]
     public void Execute()
     {
-            if (!playerPhotonView.IsMine) return; // Solo el propietario ejecuta este comando
+        if (!playerPhotonView.IsMine) return;
 
-            Debug.Log($"ShootCmd ejecutado por {PhotonNetwork.NickName} en {Time.time}");
-            playerPhotonView.RPC("ExecuteShoot", RpcTarget.All, disparoPrefabName, spawnPosition, shootDirection, bulletSpeed);
+        Debug.Log($"ShootCmd ejecutado por {PhotonNetwork.NickName} en {Time.time}");
 
+        // Instanciar disparo y configurar el PhotonView correctamente
+        GameObject disparo = PhotonNetwork.Instantiate(disparoPrefabName, spawnPosition, Quaternion.identity);
+        Rigidbody2D rb = disparo.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.velocity = shootDirection * bulletSpeed;
+        }
+
+        PhotonView disparoView = disparo.GetComponent<PhotonView>();
+        if (disparoView != null)
+        {
+            disparoView.RPC("SetOwner", RpcTarget.AllBuffered, playerPhotonView.ViewID);
+        }
     }
 }

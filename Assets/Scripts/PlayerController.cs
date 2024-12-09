@@ -207,23 +207,21 @@ public class PlayerController : MonoBehaviour
     [PunRPC]
     public void TakeDamage(int damage)
     {
-        if (!pv.IsMine) return; // Solo el cliente propietario aplica el daño
-
+        // Aplicar daño independientemente de si es propietario o no
         currentHealth -= damage;
         Debug.Log($"{gameObject.name} recibió {damage} de daño. Salud actual: {currentHealth}");
 
         if (currentHealth <= 0)
         {
-            Die(); // Llamar al método Die cuando la salud llega a 0
+            Die(); // Llamar al método Die cuando la salud llegue a 0
         }
     }
 
     [PunRPC]
     public void ApplyPush(Vector2 direction, float force)
     {
-        if (!pv.IsMine) return; // Solo el cliente propietario aplica el empuje
-
-        rb.AddForce(direction * force, ForceMode2D.Impulse); // Aplica la fuerza al Rigidbody2D
+        // Aplicar empuje independientemente de si es propietario o no
+        rb.AddForce(direction * force, ForceMode2D.Impulse);
     }
 
     [PunRPC]
