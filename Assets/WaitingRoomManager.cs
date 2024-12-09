@@ -34,6 +34,13 @@ public class WaitingRoomManager : MonoBehaviourPunCallbacks
         // Solo el MasterClient puede iniciar la partida
         if (PhotonNetwork.IsMasterClient)
         {
+            // Verificar que haya exactamente 2 jugadores en la sala
+            if (PhotonNetwork.PlayerList.Length != 2)
+            {
+                roomStatusText.text = "Debe haber exactamente 2 jugadores para iniciar la partida.";
+                return;
+            }
+
             // Verificar si todos los jugadores están listos
             if (CheckAllPlayersReady())
             {
@@ -46,6 +53,7 @@ public class WaitingRoomManager : MonoBehaviourPunCallbacks
             }
         }
     }
+
 
     private bool CheckAllPlayersReady()
     {
