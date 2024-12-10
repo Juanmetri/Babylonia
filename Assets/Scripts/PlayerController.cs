@@ -27,6 +27,8 @@ public class PlayerController : MonoBehaviour
     private float chargeTime = 0f; // Charge duration
     public float maxChargeTime = 1f; // Max charge time for charged shot
     private bool canShoot = true;
+    private float originalMoveSpeed;
+    private bool isSpeedBoostActive = false;
 
     private void Awake()
     {
@@ -258,4 +260,42 @@ public class PlayerController : MonoBehaviour
             bulletSpawnPoint.localPosition = newPosition;
         }
     }
+    [PunRPC]
+    public void ActivateSpeedBoost(float boostAmount, float duration)
+    {
+        if (!isSpeedBoostActive)
+        {
+            StartCoroutine(SpeedBoostCoroutine(boostAmount, duration));
+        }
+    }
+
+    private IEnumerator SpeedBoostCoroutine(float boostAmount, float duration)
+    {
+        isSpeedBoostActive = true;
+        float originalMoveSpeed = moveSpeed;
+        moveSpeed += boostAmount;
+
+        yield return new WaitForSeconds(duration);
+
+        moveSpeed = originalMoveSpeed;
+        isSpeedBoostActive = false;
+    }
+
+    [PunRPC]
+    public void ActivateJumpBoost(float boostAmount, float duration)
+    {
+        StartCoroutine(JumpBoostCoroutine(boostAmount, duration));
+    }
+
+    private IEnumerator JumpBoostCoroutine(float boostAmount, float duration)
+    {
+        float originalJumpForce = jumpForce; // Save the current jump force
+        jumpForce += boostAmount;
+
+        yield return new WaitForSeconds(duration);
+
+        // Reset to the original jump force
+        jumpForce = originalJumpForce;
+    }
+
 }

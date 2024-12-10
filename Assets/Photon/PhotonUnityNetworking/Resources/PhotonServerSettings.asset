@@ -63,6 +63,11 @@ MonoBehaviour:
   - HandleInput
   - Shoot
   - ShootCharged
+  - SetOwner
+  - ActivateSpeedBoost
+  - DestroyPowerUp
+  - ActivateJumpBoost
+  - ActivateDamageBoost
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
