@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro; // Para usar TextMeshPro
 using Photon.Pun;
+using Photon.Realtime;
 
 public class GameOverManager : MonoBehaviourPunCallbacks
 {
@@ -21,6 +22,21 @@ public class GameOverManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ShowWinnerScreen(string winnerName)
     {
+        // Retrieve the winner's PlayerID
+        string winnerPlayerID = "UnknownPlayer"; // Default in case no ID is found
+
+        // Search for the winner in PhotonNetwork's PlayerList
+        foreach (Player player in PhotonNetwork.PlayerList)
+        {
+            if (player.NickName == winnerName)
+            {
+                winnerPlayerID = player.CustomProperties.ContainsKey("PlayerID")
+                    ? player.CustomProperties["PlayerID"].ToString()
+                    : "UnknownPlayer";
+                break;
+            }
+        }
+
         // Detener el tiempo
         Time.timeScale = 0;
 
@@ -28,7 +44,7 @@ public class GameOverManager : MonoBehaviourPunCallbacks
         if (winnerScreen != null && winnerText != null)
         {
             winnerScreen.SetActive(true);
-            winnerText.text = $"{winnerName} Ganó la partida!";
+            winnerText.text = $"{winnerPlayerID} - {winnerName} Ganó la partida!";
         }
     }
 
