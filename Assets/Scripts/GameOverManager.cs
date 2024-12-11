@@ -20,15 +20,15 @@ public class GameOverManager : MonoBehaviourPunCallbacks
 
     // Llamado cuando un jugador muere
     [PunRPC]
-    public void ShowWinnerScreen(string winnerName)
+    public void ShowWinnerScreen(string winnerName, int winnerActorNumber)
     {
         // Retrieve the winner's PlayerID
-        string winnerPlayerID = "UnknownPlayer"; // Default in case no ID is found
+        string winnerPlayerID = "UnknownPlayer"; // Default if no ID is found
 
         // Search for the winner in PhotonNetwork's PlayerList
         foreach (Player player in PhotonNetwork.PlayerList)
         {
-            if (player.NickName == winnerName)
+            if (player.ActorNumber == winnerActorNumber) // Match by ActorNumber for accuracy
             {
                 winnerPlayerID = player.CustomProperties.ContainsKey("PlayerID")
                     ? player.CustomProperties["PlayerID"].ToString()
@@ -44,7 +44,7 @@ public class GameOverManager : MonoBehaviourPunCallbacks
         if (winnerScreen != null && winnerText != null)
         {
             winnerScreen.SetActive(true);
-            winnerText.text = $"{winnerPlayerID} - {winnerName} Ganó la partida!";
+            winnerText.text = $"ID: {winnerPlayerID} - {winnerName} Ganó la partida!";
         }
     }
 
