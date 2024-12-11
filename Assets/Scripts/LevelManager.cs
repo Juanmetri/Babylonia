@@ -22,7 +22,7 @@ public class LevelManager : MonoBehaviour
     public void Botonstart() 
     {
 
-        SceneManager.LoadScene(2);
+        SceneManager.LoadScene(3);
     
     
     }

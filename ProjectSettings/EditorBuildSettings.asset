@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Loading.unity
     guid: 6074f9218534d6446a9923ca44681f62
   - enabled: 1
+    path: Assets/Scenes/ID Room.unity
+    guid: 949172584947c95489457c51cee91ae8
+  - enabled: 1
     path: Assets/Scenes/Menu arranque.unity
     guid: 61f809fae3388fe49821ef439bfcc541
   - enabled: 1
