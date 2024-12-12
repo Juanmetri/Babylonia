@@ -18,34 +18,58 @@ public class GameOverManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // Llamado cuando un jugador muere
-    [PunRPC]
-    public void ShowWinnerScreen(string winnerName)
+    // Método para determinar al ganador y mostrar la pantalla de ganador
+    public void DetermineWinner()
     {
-        // Retrieve the winner's PlayerID
-        string winnerPlayerID = "UnknownPlayer"; // Default in case no ID is found
+        Player winner = null;
+        int highestHealth = -1;
 
-        // Search for the winner in PhotonNetwork's PlayerList
+        // Iterar por todos los jugadores en la sala para encontrar al que tiene más vida
         foreach (Player player in PhotonNetwork.PlayerList)
         {
-            if (player.NickName == winnerName)
+            if (player.CustomProperties.ContainsKey("Health"))
             {
-                winnerPlayerID = player.CustomProperties.ContainsKey("PlayerID")
-                    ? player.CustomProperties["PlayerID"].ToString()
-                    : "UnknownPlayer";
-                break;
+                int playerHealth = (int)player.CustomProperties["Health"];
+                if (playerHealth > highestHealth)
+                {
+                    highestHealth = playerHealth;
+                    winner = player;
+                }
             }
         }
 
-        // Detener el tiempo
-        Time.timeScale = 0;
+        // Si se encuentra un ganador, mostrar la pantalla de ganador
+        if (winner != null)
+        {
+            string winnerPlayerID = winner.CustomProperties.ContainsKey("PlayerID")
+                ? winner.CustomProperties["PlayerID"].ToString()
+                : "UnknownPlayer";
 
-        // Mostrar la pantalla de ganador en ambos jugadores
+            // Detener el tiempo de juego
+            Time.timeScale = 0;
+
+            // Enviar un RPC para mostrar la pantalla del ganador en ambos clientes
+            photonView.RPC("ShowWinnerScreen", RpcTarget.All, winnerPlayerID);
+        }
+        else
+        {
+            Debug.LogError("No se pudo determinar el ganador.");
+        }
+    }
+
+    // RPC para mostrar la pantalla de ganador sincronizadamente
+    [PunRPC]
+    public void ShowWinnerScreen(string winnerPlayerID)
+    {
+        // Mostrar la pantalla del ganador
         if (winnerScreen != null && winnerText != null)
         {
             winnerScreen.SetActive(true);
-            winnerText.text = $"ID: {winnerPlayerID} - {winnerName} Ganó la partida!";
+            winnerText.text = $"¡Ganador!\nID: {winnerPlayerID}";
         }
+
+        // Detener el tiempo de juego
+        Time.timeScale = 0;
     }
 
     // Método para volver al menú principal

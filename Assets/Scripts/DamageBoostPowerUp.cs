@@ -6,6 +6,7 @@ public class DamageBoostPowerUp : MonoBehaviour
     public float boostAmount = 10f; // Amount to increase damage
     public float duration = 5f; // How long the boost lasts
 
+    [PunRPC]
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))

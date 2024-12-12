@@ -5,57 +5,57 @@ using TMPro;
 
 public class WaitingRoomManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField] private TMP_Text playerStatusText; // Text to show player statuses
-    [SerializeField] private TMP_Text roomStatusText;   // Text to show room status
-    [SerializeField] private GameObject readyButton;    // "Ready" button
-    [SerializeField] private GameObject startButton;    // "Start Game" button (only visible to MasterClient)
+    [SerializeField] private TMP_Text playerStatusText; // Texto para mostrar el estado de los jugadores
+    [SerializeField] private TMP_Text roomStatusText;   // Texto para mostrar mensajes globales en la sala
+    [SerializeField] private GameObject readyButton;    // Botón "Estoy Listo"
+    [SerializeField] private GameObject startButton;    // Botón "Iniciar Partida" (solo visible para MasterClient)
 
     private string playerID;
 
-    private const string RoomReadyKey = "AllPlayersReady"; // Key for global room property
+    private const string RoomReadyKey = "AllPlayersReady"; // Clave para la propiedad global de la sala
 
     private void Start()
     {
-        // Retrieve the saved player ID from PlayerPrefs
+        // Recuperar el ID del jugador guardado en PlayerPrefs
         playerID = PlayerPrefs.GetString("PlayerID", "DefaultPlayerID");
         Debug.Log($"Player ID retrieved in WaitingRoomManager: {playerID}");
 
-        // Show the "Start Game" button only to the MasterClient
+        // Mostrar el botón "Iniciar Partida" solo al MasterClient
         startButton.SetActive(PhotonNetwork.IsMasterClient);
 
-        // Update the initial player status display
+        // Actualizar el estado inicial de los jugadores
         UpdatePlayerStatusText();
     }
 
     public void OnReadyButtonClicked()
     {
-        // Set the player as "ready" and include their PlayerID in custom properties
+        // Establecer al jugador como "listo" y guardar su PlayerID en las propiedades personalizadas
         PhotonNetwork.LocalPlayer.SetCustomProperties(new ExitGames.Client.Photon.Hashtable
         {
             { "Ready", true },
             { "PlayerID", playerID }
         });
 
-        // Disable the ready button after marking the player as ready
+        // Desactivar el botón "Listo" después de marcar al jugador como listo
         readyButton.SetActive(false);
     }
 
     public void OnStartGameButtonClicked()
     {
-        // Only the MasterClient can start the game
+        // Solo el MasterClient puede iniciar la partida
         if (PhotonNetwork.IsMasterClient)
         {
-            // Ensure exactly 2 players are in the room
+            // Verificar que haya exactamente 2 jugadores en la sala
             if (PhotonNetwork.PlayerList.Length != 2)
             {
                 roomStatusText.text = "Debe haber exactamente 2 jugadores para iniciar la partida.";
                 return;
             }
 
-            // Check if all players are ready
+            // Verificar si todos los jugadores están listos
             if (CheckAllPlayersReady())
             {
-                // Set the room property to signal that the game should start
+                // Establecer la propiedad global de la sala para iniciar el juego
                 PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { RoomReadyKey, true } });
             }
             else
@@ -71,21 +71,49 @@ public class WaitingRoomManager : MonoBehaviourPunCallbacks
         {
             if (!player.CustomProperties.ContainsKey("Ready") || !(bool)player.CustomProperties["Ready"])
             {
-                return false; // If any player is not ready, return false
+                return false; // Si algún jugador no está listo, devolvemos falso
             }
         }
         return true;
     }
 
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        // Obtener el ID del jugador que se unió
+        string playerID = newPlayer.CustomProperties.ContainsKey("PlayerID")
+            ? newPlayer.CustomProperties["PlayerID"].ToString()
+            : "UnknownPlayer";
+
+        // Mostrar el mensaje
+        roomStatusText.text = $"El jugador {playerID} se ha unido a la sala.";
+
+        // Actualizar el estado de los jugadores
+        UpdatePlayerStatusText();
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        // Obtener el ID del jugador que abandonó
+        string playerID = otherPlayer.CustomProperties.ContainsKey("PlayerID")
+            ? otherPlayer.CustomProperties["PlayerID"].ToString()
+            : "UnknownPlayer";
+
+        // Mostrar el mensaje
+        roomStatusText.text = $"El jugador {playerID} ha abandonado la sala.";
+
+        // Actualizar el estado de los jugadores
+        UpdatePlayerStatusText();
+    }
+
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps)
     {
-        // If either the "Ready" or "PlayerID" property changes
+        // Si cambian las propiedades "Ready" o "PlayerID"
         if (changedProps.ContainsKey("Ready") || changedProps.ContainsKey("PlayerID"))
         {
-            // Refresh the player status text to reflect the updated properties
+            // Actualizar el estado de los jugadores
             UpdatePlayerStatusText();
 
-            // If the MasterClient detects that all players are ready, update the room status
+            // Si el MasterClient detecta que todos están listos, habilita la lógica de inicio
             if (PhotonNetwork.IsMasterClient && CheckAllPlayersReady())
             {
                 roomStatusText.text = "Todos los jugadores están listos. Puedes iniciar la partida.";
@@ -95,10 +123,10 @@ public class WaitingRoomManager : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
     {
-        // If the room is ready to start, load the gameplay scene
+        // Si la sala está lista para comenzar, inicia el juego
         if (propertiesThatChanged.ContainsKey(RoomReadyKey) && (bool)propertiesThatChanged[RoomReadyKey])
         {
-            PhotonNetwork.LoadLevel("GamePlay"); // Synchronize the new scene load
+            PhotonNetwork.LoadLevel("GamePlay"); // Sincroniza la carga de la nueva escena
         }
     }
 
@@ -106,22 +134,22 @@ public class WaitingRoomManager : MonoBehaviourPunCallbacks
     {
         string status = "Estado de los jugadores:\n";
 
-        // Iterate through all players in the room
+        // Iterar por todos los jugadores en la sala
         foreach (Player player in PhotonNetwork.PlayerList)
         {
-            // Check if the player is ready
+            // Obtener si el jugador está listo
             bool isReady = player.CustomProperties.ContainsKey("Ready") && (bool)player.CustomProperties["Ready"];
 
-            // Retrieve the PlayerID from the custom properties
+            // Obtener el PlayerID del jugador
             string retrievedPlayerID = player.CustomProperties.ContainsKey("PlayerID")
                 ? player.CustomProperties["PlayerID"].ToString()
                 : "UnknownPlayer";
 
-            // Add the player's ID, nickname, and readiness status to the display
-            status += $"ID:{retrievedPlayerID}-{player.NickName}:{(isReady ? "Listo" : "No Listo")}\n";
+            // Añadir el estado del jugador a la UI
+            status += $"{retrievedPlayerID} ({player.NickName}): {(isReady ? "Listo" : "No Listo")}\n";
         }
 
-        // Update the status text UI element
+        // Actualizar el texto en la UI
         playerStatusText.text = status;
     }
 }

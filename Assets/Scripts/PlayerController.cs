@@ -209,13 +209,17 @@ public class PlayerController : MonoBehaviour
     [PunRPC]
     public void TakeDamage(int damage)
     {
-        // Aplicar daño independientemente de si es propietario o no
         currentHealth -= damage;
         Debug.Log($"{gameObject.name} recibió {damage} de daño. Salud actual: {currentHealth}");
 
+        // Sincronizar la vida restante con Photon
+        PhotonNetwork.LocalPlayer.SetCustomProperties(new ExitGames.Client.Photon.Hashtable
+    {
+        { "Health", currentHealth }});
+
         if (currentHealth <= 0)
         {
-            Die(); // Llamar al método Die cuando la salud llegue a 0
+            Die();
         }
     }
 
@@ -233,19 +237,15 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log($"{gameObject.name} ha muerto.");
 
-        // Determinar al ganador
-        string winnerName = "";
-        foreach (var player in PhotonNetwork.PlayerList)
+        // Llamar al método del GameOverManager para determinar al ganador
+        GameOverManager gameOverManager = FindObjectOfType<GameOverManager>();
+        if (gameOverManager != null)
         {
-            if (player.NickName != PhotonNetwork.NickName)
-            {
-                winnerName = player.NickName; // Encuentra el nombre del otro jugador
-            }
+            gameOverManager.DetermineWinner(); // Determinar el ganador basado en las vidas restantes
         }
 
-        // Llamar al RPC para mostrar la pantalla del ganador a todos
-        PhotonView.FindObjectsOfType<GameOverManager>()[0].photonView.RPC("ShowWinnerScreen", RpcTarget.All, winnerName);
-
+        // Destruir el objeto del jugador
+        PhotonNetwork.Destroy(gameObject);
     }
 
     [PunRPC]
@@ -268,7 +268,7 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(SpeedBoostCoroutine(boostAmount, duration));
         }
     }
-
+    [PunRPC]
     private IEnumerator SpeedBoostCoroutine(float boostAmount, float duration)
     {
         isSpeedBoostActive = true;
@@ -286,7 +286,7 @@ public class PlayerController : MonoBehaviour
     {
         StartCoroutine(JumpBoostCoroutine(boostAmount, duration));
     }
-
+    [PunRPC]
     private IEnumerator JumpBoostCoroutine(float boostAmount, float duration)
     {
         float originalJumpForce = jumpForce; // Save the current jump force

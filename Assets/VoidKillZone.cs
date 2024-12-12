@@ -25,27 +25,24 @@ public class VoidKillZone : MonoBehaviour
             PhotonView pv = other.GetComponent<PhotonView>();
             if (pv != null && pv.IsMine)
             {
-                // Determinar al ganador
-                string winnerName = "";
-                foreach (var player in PhotonNetwork.PlayerList)
+                // Sincronizar la vida a 0 para el jugador que cae al vacío
+                PhotonNetwork.LocalPlayer.SetCustomProperties(new ExitGames.Client.Photon.Hashtable
                 {
-                    if (player.NickName != PhotonNetwork.NickName)
-                    {
-                        winnerName = player.NickName; // Encuentra el nombre del otro jugador
-                    }
-                }
+                    { "Health", 0 }
+                });
 
-                // Mostrar pantalla de ganador sincronizadamente
+                // Llamar al GameOverManager para determinar el ganador
                 if (gameOverManager != null)
                 {
-                    gameOverManager.photonView.RPC("ShowWinnerScreen", RpcTarget.All, winnerName);
+                    gameOverManager.DetermineWinner(); // Lógica para determinar el ganador
                 }
                 else
                 {
                     Debug.LogError("GameOverManager no está configurado.");
                 }
 
-      
+                // Destruir el objeto del jugador que cayó
+                PhotonNetwork.Destroy(other.gameObject);
             }
         }
         else

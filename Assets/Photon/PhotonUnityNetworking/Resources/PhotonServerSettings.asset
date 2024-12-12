@@ -68,6 +68,14 @@ MonoBehaviour:
   - DestroyPowerUp
   - ActivateJumpBoost
   - ActivateDamageBoost
+  - JumpBoostCoroutine
+  - SpeedBoostCoroutine
+  - DetermineWinner
+  - Start
+  - ReturnToMenu
+  - HideDisconnectMessage
+  - OnPlayerLeftRoom
+  - ShowDisconnectMessage
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
