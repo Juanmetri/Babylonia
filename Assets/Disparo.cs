@@ -37,16 +37,20 @@ public class Disparo : MonoBehaviour
             }
         }
 
-        // Destruir el disparo desde el cliente que lo creó
-        if (PhotonNetwork.IsMasterClient || (ownerPhotonView != null && ownerPhotonView.IsMine))
+        // Transferencia de propiedad antes de destruir la bala
+        PhotonView myView = GetComponent<PhotonView>();
+        if (myView != null && !myView.IsMine)
+        {
+            myView.TransferOwnership(PhotonNetwork.LocalPlayer);
+        }
+
+        if (PhotonNetwork.IsMasterClient || (myView != null && myView.IsMine))
         {
             PhotonNetwork.Destroy(gameObject);
         }
         else
         {
-            Debug.LogWarning("El cliente no tiene permiso para destruir este objeto.");
+            Debug.LogWarning("No tienes permiso para destruir este objeto.");
         }
-
-
     }
 }

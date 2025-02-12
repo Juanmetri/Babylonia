@@ -31,17 +31,24 @@ public class SpeedBoostPowerUp : MonoBehaviour
     [PunRPC]
     private void DestroyPowerUp()
     {
-        if (PhotonNetwork.IsMasterClient)
+        PhotonView myView = GetComponent<PhotonView>();
+
+        if (myView != null)
         {
-            PhotonView myView = GetComponent<PhotonView>();
-            if (myView != null && PhotonView.Find(myView.ViewID) != null)
+            if (!myView.IsMine)
             {
-                Debug.Log($"Destroying object with ViewID: {myView.ViewID}");
+                // Transferir propiedad al jugador que intenta destruirlo
+                myView.TransferOwnership(PhotonNetwork.LocalPlayer);
+            }
+
+            if (PhotonNetwork.IsMasterClient || myView.IsMine)
+            {
+                Debug.Log($"Destroying power-up with ViewID: {myView.ViewID}");
                 PhotonNetwork.Destroy(gameObject);
             }
             else
             {
-                Debug.LogWarning("PhotonView not found or already destroyed.");
+                Debug.LogWarning("No tienes permisos para destruir este objeto.");
             }
         }
     }
