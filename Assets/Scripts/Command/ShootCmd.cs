@@ -24,8 +24,6 @@ public class ShootCmd : ICommand
         if (!playerPhotonView.IsMine) return;
 
         Debug.Log($"ShootCmd ejecutado por {PhotonNetwork.NickName} en {Time.time}");
-
-        // Instanciar disparo y configurar el PhotonView correctamente
         GameObject disparo = PhotonNetwork.Instantiate(disparoPrefabName, spawnPosition, Quaternion.identity);
         Rigidbody2D rb = disparo.GetComponent<Rigidbody2D>();
         if (rb != null)

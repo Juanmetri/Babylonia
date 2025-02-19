@@ -21,7 +21,7 @@ public class SpeedBoostPowerUp : MonoBehaviour
                 if (myView != null && PhotonNetwork.IsConnected)
                 {
                     Debug.Log($"Requesting destruction of object with ViewID: {myView.ViewID}");
-                    gameObject.SetActive(false); // Disable to prevent further interactions
+                    gameObject.SetActive(false);
                     myView.RPC("DestroyPowerUp", RpcTarget.MasterClient);
                 }
             }
@@ -37,7 +37,6 @@ public class SpeedBoostPowerUp : MonoBehaviour
         {
             if (!myView.IsMine)
             {
-                // Transferir propiedad al jugador que intenta destruirlo
                 myView.TransferOwnership(PhotonNetwork.LocalPlayer);
             }
 

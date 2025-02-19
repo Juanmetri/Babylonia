@@ -48,8 +48,6 @@ public class PlayerSpawn : MonoBehaviour
         // Cambiar color del jugador
         int colorIndex = actorNumber % 2;
         Color playerColor = (colorIndex == 0) ? Color.red : Color.yellow;
-
-        // Usar el PhotonView del GameObject que maneja el spawn para enviar el RPC
         if (pv != null)
         {
             pv.RPC("SetPlayerColor", RpcTarget.AllBuffered, player.GetComponent<PhotonView>().ViewID, playerColor.r, playerColor.g, playerColor.b, playerColor.a);
@@ -59,14 +57,12 @@ public class PlayerSpawn : MonoBehaviour
     [PunRPC]
     private void SetPlayerColor(int playerViewID, float r, float g, float b, float a)
     {
-        // Encontrar el PhotonView del jugador
         PhotonView targetPhotonView = PhotonView.Find(playerViewID);
         if (targetPhotonView != null)
         {
             SpriteRenderer spriteRenderer = targetPhotonView.GetComponent<SpriteRenderer>();
             if (spriteRenderer != null)
             {
-                // Aplicar el color
                 spriteRenderer.color = new Color(r, g, b, a);
                 Debug.Log($"Color aplicado al jugador {targetPhotonView.ViewID}: {spriteRenderer.color}");
             }
